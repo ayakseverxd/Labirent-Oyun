@@ -1,0 +1,10 @@
+First of all we got 2 problems and got 1 big problem.
+
+1.) When the game starts you can move before the maze generated its needs to be fixed.
+
+2.) When the game ends the player can move while sees the modal its needs to fixed.
+
+3.) The big problem is i used Eller's Algorithm to generate the maze but when its generating the maze sometimes the player can get stuck and i dont know how to fix it.
+
+I think this is all my problems but i want to hear my problems from you too so i'm sending you this.
+

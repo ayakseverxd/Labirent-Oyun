@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Labirent Oyunu</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .maze {
+            display: grid;
+            grid-template-columns: repeat(40, 30px);
+            grid-template-rows: repeat(40, 30px);
+            justify-content: center;
+        }
+
+        .cell {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #000;
+            background-color: #fff;
+        }
+
+        .start {
+            background-color: green;
+        }
+
+        .end {
+            background-color: red;
+        }
+        .player {
+            background-color: blue;
+        }
+        .obstacle {
+            background-color: pink;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .reset-button {
+            display: block;
+            margin-top: 10px;
+        } 
+        h1{
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Labirent Oyunu</h1>
+    <div class="maze" id="maze"></div>
+     <div id="message"></div>
+     <!-- Modal -->
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <p>Oyunu sıfırlamak istediğinize emin misiniz?</p>
+            <button class="reset-button" id="confirmReset">Evet</button>
+            <button class="reset-button" id="cancelReset">Hayır</button>
+        </div>
+    </div>
+
+    <script>
+        const mazeContainer = document.getElementById('maze');
+        const messageElement = document.getElementById('message');
+        // Labirent boyutları
+        const rows = 40;
+        const cols = 40
+        // Başlangıç ve bitiş noktaları
+        const startCell = [0, 0];
+        const endCell = [39, 39];
+        const maze = [];
+        
+
+
+        let playerPosition = [...startCell];
+        // Labirenti oluştur
+        for (let row = 0; row < rows; row++) {
+            maze.push([]);
+            for (let col = 0; col < cols; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                if (row === startCell[0] && col === startCell[1]) {
+                    cell.classList.add('start');
+                }
+                if (row === endCell[0] && col === endCell[1]) {
+                    cell.classList.add('end');
+                }
+                mazeContainer.appendChild(cell);
+                maze[row].push(cell);
+            }
+        }
+        let playerCell = maze[playerPosition[0]][playerPosition[1]];
+        playerCell.classList.add('player');
+        ///
+        document.addEventListener('keydown', (event) => {
+    const key = event.key;
+
+    const move = (dx, dy) => {
+        const newPosX = playerPosition[0] + dx;
+        const newPosY = playerPosition[1] + dy;
+
+        if (newPosX >= 0 && newPosX < rows && newPosY >= 0 && newPosY < cols) {
+            const newCell = maze[newPosX][newPosY];
+            if (newCell.classList.contains('obstacle')) {
+                return; // Duvarı geçemez
+            }
+
+            playerCell.classList.remove('player');
+            playerCell = newCell;
+            playerPosition = [newPosX, newPosY];
+            playerCell.classList.add('player');
+
+            if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
+                messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
+            }
+        }
+    };
+
+    if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
+        messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
+        // Modalı göster
+        const resetModal = document.getElementById('resetModal');
+        resetModal.style.display = 'block';
+    }
+
+    if (key === 'ArrowUp') {
+        move(-1, 0);
+    } else if (key === 'ArrowDown') {
+        move(1, 0);
+    } else if (key === 'ArrowLeft') {
+        move(0, -1);
+    } else if (key === 'ArrowRight') {
+        move(0, 1);
+    }
+});
+        // Eller Algoritması ile labirenti oluştur
+        const stack = [];
+        const visited = [];
+
+        function isValid(x, y) {
+            return x >= 0 && x < rows && y >= 0 && y < cols && !visited[x][y];
+        }
+
+        for (let i = 0; i < rows; i++) {
+            visited.push(new Array(cols).fill(false));
+        }
+        
+        let currentCell = [0, 0];
+        visited[currentCell[0]][currentCell[1]] = true;
+
+        const cleanAreaSize = 4; // Değiştirebileceğiniz bir değer
+for (let i = 1; i < rows; i += 2) {
+    for (let j = 1; j < cols; j += 2) {
+        if (i <= cleanAreaSize && j <= cleanAreaSize) {
+            // Başlangıç noktası etrafındaki temiz alan
+            visited[i][j] = true;
+        }
+    }
+}
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+                    // Engellerin eklenmesi için rastgele bir olasılık fonksiyonu
+                    function addObstacle() {
+                        return Math.random() < 0.5; // Engel olasılığı (örneğin, 0.3)
+                    }
+
+                    async function generateMaze() {
+    while (stack.length > 0 || visited.flat().filter(v => !v).length > 0) {
+        const neighbors = [];
+
+        const [x, y] = currentCell;
+
+        if (isValid(x - 2, y)) neighbors.push([x - 2, y]);
+        if (isValid(x + 2, y)) neighbors.push([x + 2, y]);
+        if (isValid(x, y - 2)) neighbors.push([x, y - 2]);
+        if (isValid(x, y + 2)) neighbors.push([x, y + 2]);
+
+        if (neighbors.length > 0) {
+            stack.push(currentCell);
+            const [newX, newY] = neighbors[Math.floor(Math.random() * neighbors.length)];
+
+            const wallX = x + (newX - x) / 2;
+            const wallY = y + (newY - y) / 2;
+
+            const wallCell = mazeContainer.children[wallX * cols + wallY];
+            wallCell.classList.add("obstacle");
+
+            currentCell = [newX, newY];
+            visited[newX][newY] = true;
+
+            if (addObstacle() && !wallCell.classList.contains('start') && !wallCell.classList.contains('end')) {
+                wallCell.classList.add('obstacle');
+            }
+
+            if (newX === endCell[0] && newY === endCell[1]) {
+                endCell = [x, y];
+                wallCell.classList.add('obstacle'); // Son hücreye engel eklemek için
+            }
+        } else if (stack.length > 0) {
+            currentCell = stack.pop();
+        }
+
+        if (stack.length === 0 && visited.flat().filter(v => !v).length > 0) {
+            for (let i = rows - 1; i > 0; i -= 2) {
+                for (let j = cols - 1; j > 0; j -= 2) {
+                    if (!visited[i][j]) {
+                        visited[i][j] = true;
+                        mazeContainer.children[i * cols + j].classList.remove('obstacle');
+                    }
+                }
+            }
+        }
+
+        await sleep(10);
+    }
+}
+        generateMaze();
+
+                // Reset işlemi onaylandığında
+                const confirmResetButton = document.getElementById('confirmReset');
+        confirmResetButton.addEventListener('click', () => {
+            resetGame();
+        });
+
+        // Reset işlemi iptal edildiğinde
+        const cancelResetButton = document.getElementById('cancelReset');
+        cancelResetButton.addEventListener('click', () => {
+            const resetModal = document.getElementById('resetModal');
+            resetModal.style.display = 'none';
+        });
+
+        // Oyunu sıfırlama fonksiyonu
+        function resetGame() {
+            // Labirenti ve mesajı sıfırla
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    maze[row][col].classList.remove('player');
+                }
+            }
+            playerPosition = [...startCell];
+            playerCell = maze[playerPosition[0]][playerPosition[1]];
+            playerCell.classList.add('player');
+            messageElement.textContent = '';
+
+            // Modalı kapat
+            const resetModal = document.getElementById('resetModal');
+            resetModal.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
