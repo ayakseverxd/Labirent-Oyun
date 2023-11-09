@@ -1,269 +1,321 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Labirent Oyunu</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Labirent Oyunu</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+		}
 
-        .maze {
-            display: grid;
-            grid-template-columns: repeat(40, 30px);
-            grid-template-rows: repeat(40, 30px);
-            justify-content: center;
-        }
+		.maze {
+			display: grid;
+			grid-template-columns: repeat(40, 30px);
+			grid-template-rows: repeat(40, 30px);
+			justify-content: center;
+		}
 
-        .cell {
-            width: 30px;
-            height: 30px;
-            border: 1px solid #000;
-            background-color: #fff;
-        }
+		.cell {
+			width: 30px;
+			height: 30px;
+			border: 1px solid #000;
+			background-color: #fff;
+		}
 
-        .start {
-            background-color: green;
-        }
+		.start {
+			background-color: green;
+		}
 
-        .end {
-            background-color: red;
-        }
-        .player {
-            background-color: blue;
-        }
-        .obstacle {
-            background-color: pink;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            justify-content: center;
-            align-items: center;
-        }
+		.end {
+			background-color: red;
+		}
+		.player {
+			background-color: blue;
+		}
+		.obstacle {
+			background-color: pink;
+		}
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-color: rgba(0, 0, 0, 0.5);
+			justify-content: center;
+			align-items: center;
+		}
 
-        .modal-content {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 5px;
-        }
+		.modal-content {
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 5px;
+		}
 
-        .reset-button {
-            display: block;
-            margin-top: 10px;
-        } 
-        h1{
-            text-align: center;
-        }
-    </style>
+		.reset-button {
+			display: block;
+			margin-top: 10px;
+		} 
+		h1{
+			text-align: center;
+		}
+	</style>
 </head>
 <body>
-    <h1>Labirent Oyunu</h1>
-    <div class="maze" id="maze"></div>
-     <div id="message"></div>
-     <!-- Modal -->
-    <div id="resetModal" class="modal">
-        <div class="modal-content">
-            <p>Oyunu sıfırlamak istediğinize emin misiniz?</p>
-            <button class="reset-button" id="confirmReset">Evet</button>
-            <button class="reset-button" id="cancelReset">Hayır</button>
-        </div>
-    </div>
+	<h1>Labirent Oyunu</h1>
+	<div class="maze" id="maze"></div>
+		<div id="message"></div>
+		<!-- Modal -->
+	<div id="resetModal" class="modal">
+		<div class="modal-content">
+			<p>Oyunu sıfırlamak istediğinize emin misiniz?</p>
+			<button class="reset-button" id="confirmReset">Evet</button>
+			<button class="reset-button" id="cancelReset">Hayır</button>
+		</div>
+	</div>
 
-    <script>
-        const mazeContainer = document.getElementById('maze');
-        const messageElement = document.getElementById('message');
-        // Labirent boyutları
-        const rows = 40;
-        const cols = 40
-        // Başlangıç ve bitiş noktaları
-        const startCell = [0, 0];
-        const endCell = [39, 39];
-        const maze = [];
-        
+	<script>
+		const mazeContainer = document.getElementById('maze');
+		const messageElement = document.getElementById('message');
+		// Labirent boyutları
+		const rows = 40;
+		const cols = 40
+		// Başlangıç ve bitiş noktaları
+		const startCell = [0, 0];
+		const endCell = [39, 39];
+		const maze = [];
 
+		let playerPosition = [...startCell];
+		// Labirenti oluştur
+		for (let row = 0; row < rows; row++) {
+			maze.push([]);
+			for (let col = 0; col < cols; col++) {
+				const cell = document.createElement('div');
+				cell.classList.add('cell');
+				if (row === startCell[0] && col === startCell[1]) {
+					cell.classList.add('start');
+				}
+				if (row === endCell[0] && col === endCell[1]) {
+					cell.classList.add('end');
+				}
+				mazeContainer.appendChild(cell);
+				maze[row].push(cell);
+			}
+		}
+		let playerCell = maze[playerPosition[0]][playerPosition[1]];
+		playerCell.classList.add('player');
 
-        let playerPosition = [...startCell];
-        // Labirenti oluştur
-        for (let row = 0; row < rows; row++) {
-            maze.push([]);
-            for (let col = 0; col < cols; col++) {
-                const cell = document.createElement('div');
-                cell.classList.add('cell');
-                if (row === startCell[0] && col === startCell[1]) {
-                    cell.classList.add('start');
-                }
-                if (row === endCell[0] && col === endCell[1]) {
-                    cell.classList.add('end');
-                }
-                mazeContainer.appendChild(cell);
-                maze[row].push(cell);
-            }
-        }
-        let playerCell = maze[playerPosition[0]][playerPosition[1]];
-        playerCell.classList.add('player');
-        ///
-        document.addEventListener('keydown', (event) => {
-    const key = event.key;
+		document.addEventListener('keydown', (event) => {
+			const key = event.key;
 
-    const move = (dx, dy) => {
-        const newPosX = playerPosition[0] + dx;
-        const newPosY = playerPosition[1] + dy;
+			/** @author yildiz
+			 *  hareket function'in cok guzel. bu sekilde dx, dy ile hareket ettirmek cok temiz oldu
+			 *  ama Up/Down x, Left/Right y olmus. ekranda dogru gorunecek sekilde degistirmissin ama
+			 *  asil sorun maze[newPosX][newPosY] yerine maze[newPosY][newPosX] yazman gerekmesi
+			 *  kod genelinde bu ters x/y olan yerleri duzeltmeni tavsiye ederim
+			 *  row ve column'la calismak baslarda akil karistirir ama bir sure sonra alisirsin
+			 *  x is column index, y is row index, x is left to right, y is top to bottom
+			 */
+			const move = (dx, dy) => {
+				const newPosX = playerPosition[0] + dx;
+				const newPosY = playerPosition[1] + dy;
 
-        if (newPosX >= 0 && newPosX < rows && newPosY >= 0 && newPosY < cols) {
-            const newCell = maze[newPosX][newPosY];
-            if (newCell.classList.contains('obstacle')) {
-                return; // Duvarı geçemez
-            }
+				if (newPosX >= 0 && newPosX < rows && newPosY >= 0 && newPosY < cols) {
+					const newCell = maze[newPosX][newPosY];
+					if (newCell.classList.contains('obstacle')) {
+						return; // Duvarı geçemez
+					}
 
-            playerCell.classList.remove('player');
-            playerCell = newCell;
-            playerPosition = [newPosX, newPosY];
-            playerCell.classList.add('player');
+					playerCell.classList.remove('player');
+					playerCell = newCell;
+					playerPosition = [newPosX, newPosY];
+					playerCell.classList.add('player');
 
-            if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
-                messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
-            }
-        }
-    };
+					if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
+						messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
+					}
+				}
+			};
 
-    if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
-        messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
-        // Modalı göster
-        const resetModal = document.getElementById('resetModal');
-        resetModal.style.display = 'block';
-    }
+			/** @author yildiz
+			 *  bu kontrolu hareket etmeden once yapinca hucreye girince degil cikinca calisiyor
+			 *  bence en altta olmasi daha dogru
+			 */
+			if (playerPosition[0] === endCell[0] && playerPosition[1] === endCell[1]) {
+				messageElement.textContent = 'Tebrikler! Hedefe ulaştınız!';
+				// Modalı göster
+				const resetModal = document.getElementById('resetModal');
+				resetModal.style.display = 'block';
+			}
 
-    if (key === 'ArrowUp') {
-        move(-1, 0);
-    } else if (key === 'ArrowDown') {
-        move(1, 0);
-    } else if (key === 'ArrowLeft') {
-        move(0, -1);
-    } else if (key === 'ArrowRight') {
-        move(0, 1);
-    }
-});
-        // Eller Algoritması ile labirenti oluştur
-        const stack = [];
-        const visited = [];
+			if (key === 'ArrowUp') {
+				move(-1, 0);
+			} else if (key === 'ArrowDown') {
+				move(1, 0);
+			} else if (key === 'ArrowLeft') {
+				move(0, -1);
+			} else if (key === 'ArrowRight') {
+				move(0, 1);
+			}
+		});
 
-        function isValid(x, y) {
-            return x >= 0 && x < rows && y >= 0 && y < cols && !visited[x][y];
-        }
+		/** @author yildiz
+		 *  kullandigin algoritma eller algoritmasi degil bence. yani en azindan benim gordugum kadariyla
+		 *  eller'in visited ve stack tutmasina gerek yok. farkli bir algoritma denemissin ama bazi hatalar var
+		 *  cunku labirent dogru uretilmiyor. biraz debugging'le bu hatalari bulup cozmek lazim
+		 */
+		// Eller Algoritması ile labirenti oluştur
+		const stack = [];
+		const visited = [];
 
-        for (let i = 0; i < rows; i++) {
-            visited.push(new Array(cols).fill(false));
-        }
-        
-        let currentCell = [0, 0];
-        visited[currentCell[0]][currentCell[1]] = true;
+		function isValid(x, y) {
+			return x >= 0 && x < rows && y >= 0 && y < cols && !visited[x][y];
+		}
 
-        const cleanAreaSize = 4; // Değiştirebileceğiniz bir değer
-for (let i = 1; i < rows; i += 2) {
-    for (let j = 1; j < cols; j += 2) {
-        if (i <= cleanAreaSize && j <= cleanAreaSize) {
-            // Başlangıç noktası etrafındaki temiz alan
-            visited[i][j] = true;
-        }
-    }
-}
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-                    // Engellerin eklenmesi için rastgele bir olasılık fonksiyonu
-                    function addObstacle() {
-                        return Math.random() < 0.5; // Engel olasılığı (örneğin, 0.3)
-                    }
+		for (let i = 0; i < rows; i++) {
+			visited.push(new Array(cols).fill(false));
+		}
+		
+		let currentCell = [0, 0];
+		visited[currentCell[0]][currentCell[1]] = true;
 
-                    async function generateMaze() {
-    while (stack.length > 0 || visited.flat().filter(v => !v).length > 0) {
-        const neighbors = [];
+		/** @author yildiz
+		 *  bu kodu tam anlayamadim. [1,1], [1,3], [3,1] ve [3,3] hucrelerini visited yapiyor sadece, ama neden?
+		 */
+		const cleanAreaSize = 4; // Değiştirebileceğiniz bir değer
+		for (let i = 1; i < rows; i += 2) {
+			for (let j = 1; j < cols; j += 2) {
+				if (i <= cleanAreaSize && j <= cleanAreaSize) {
+					// Başlangıç noktası etrafındaki temiz alan
+					visited[i][j] = true;
+				}
+			}
+		}
 
-        const [x, y] = currentCell;
+		/** @author yildiz
+		 *  sleep function'i cok guzel, await'le kullanabilmek icin gerekli herseyi dogru bir sekilde yapmissin
+		 */
+		function sleep(ms) {
+			return new Promise(resolve => setTimeout(resolve, ms));
+		}
 
-        if (isValid(x - 2, y)) neighbors.push([x - 2, y]);
-        if (isValid(x + 2, y)) neighbors.push([x + 2, y]);
-        if (isValid(x, y - 2)) neighbors.push([x, y - 2]);
-        if (isValid(x, y + 2)) neighbors.push([x, y + 2]);
+		// Engellerin eklenmesi için rastgele bir olasılık fonksiyonu
+		function addObstacle() {
+			return Math.random() < 0.5; // Engel olasılığı (örneğin, 0.3)
+		}
 
-        if (neighbors.length > 0) {
-            stack.push(currentCell);
-            const [newX, newY] = neighbors[Math.floor(Math.random() * neighbors.length)];
+		async function generateMaze() {
+			/** @author yildiz
+			 *  bu loop'un ne yapmasi gerektigini cozemedim. yapmasi gereken algorithma'dan da tam emin olmadigim
+			 *  icin bu asamada tam olarak nasil duzeltilmesi gerektiginden de emin degilm. sanki sil bastan yazilmasi
+			 *  lazim gibi. oncelikle +-2'ler sanki 2 bos hucre arasina 1 duvar konulmasi icin yapilmis gibi ama hatali bir
+			 *  uygulama olmus sanki. bu while da hic bitmiyor, cunku tum hucreler asla visited olmuyor, cunku visited
+			 *  yapan kod 2 atlayip bakiyor ama bitti mi diye bakan kod hepsine bakiyor. index2.html'de oynadim biraz kodun
+			 *  ustunde, ama yine duzgun bir maze cikmadi ortaya. index3'te eller algoritmasini kodladim
+			 */
+			while (stack.length > 0 || visited.flat().filter(v => !v).length > 0) {
+				const neighbors = [];
 
-            const wallX = x + (newX - x) / 2;
-            const wallY = y + (newY - y) / 2;
+				const [x, y] = currentCell;
 
-            const wallCell = mazeContainer.children[wallX * cols + wallY];
-            wallCell.classList.add("obstacle");
+				if (isValid(x - 2, y)) neighbors.push([x - 2, y]);
+				if (isValid(x + 2, y)) neighbors.push([x + 2, y]);
+				if (isValid(x, y - 2)) neighbors.push([x, y - 2]);
+				if (isValid(x, y + 2)) neighbors.push([x, y + 2]);
 
-            currentCell = [newX, newY];
-            visited[newX][newY] = true;
+				if (neighbors.length > 0) {
+					stack.push(currentCell);
+					const [newX, newY] = neighbors[Math.floor(Math.random() * neighbors.length)];
 
-            if (addObstacle() && !wallCell.classList.contains('start') && !wallCell.classList.contains('end')) {
-                wallCell.classList.add('obstacle');
-            }
+					const wallX = x + (newX - x) / 2;
+					const wallY = y + (newY - y) / 2;
 
-            if (newX === endCell[0] && newY === endCell[1]) {
-                endCell = [x, y];
-                wallCell.classList.add('obstacle'); // Son hücreye engel eklemek için
-            }
-        } else if (stack.length > 0) {
-            currentCell = stack.pop();
-        }
+					/** @author yildiz
+					 *  burdaki index bulma kodu da sana sorun cikariyor sanki. oncelikle bunun wallY * cols + wallX olmasi lazim
+					 *  ama ondan da guzeli sen zaten bunlari yapmak zorun kalmadan maze[wallY][wallX]'i kullanabilirsin
+					 */
+					const wallCell = mazeContainer.children[wallX * cols + wallY];
+					wallCell.classList.add("obstacle");
 
-        if (stack.length === 0 && visited.flat().filter(v => !v).length > 0) {
-            for (let i = rows - 1; i > 0; i -= 2) {
-                for (let j = cols - 1; j > 0; j -= 2) {
-                    if (!visited[i][j]) {
-                        visited[i][j] = true;
-                        mazeContainer.children[i * cols + j].classList.remove('obstacle');
-                    }
-                }
-            }
-        }
+					currentCell = [newX, newY];
+					visited[newX][newY] = true;
 
-        await sleep(10);
-    }
-}
-        generateMaze();
+					/** @author yildiz
+					 *  bu if'in hicbir anlami yok, 4 satir yukarda zaten hucreyi obstacle yapmissin
+					 */
+					if (addObstacle() && !wallCell.classList.contains('start') && !wallCell.classList.contains('end')) {
+						wallCell.classList.add('obstacle');
+					}
 
-                // Reset işlemi onaylandığında
-                const confirmResetButton = document.getElementById('confirmReset');
-        confirmResetButton.addEventListener('click', () => {
-            resetGame();
-        });
+					/** @author yildiz
+					 *  bu kontrol de cok kafami karistirdi, son hucreye obstacle koymamak icin yapmissin sanki ama
+					 *  son hucrenin yerini degistiriyorsun, bo oyun bitti kontrolunu falan da etkilemiyor mu?
+					 */
+					if (newX === endCell[0] && newY === endCell[1]) {
+						endCell = [x, y];
+						wallCell.classList.add('obstacle'); // Son hücreye engel eklemek için
+					}
+				} else if (stack.length > 0) {
+					currentCell = stack.pop();
+				}
 
-        // Reset işlemi iptal edildiğinde
-        const cancelResetButton = document.getElementById('cancelReset');
-        cancelResetButton.addEventListener('click', () => {
-            const resetModal = document.getElementById('resetModal');
-            resetModal.style.display = 'none';
-        });
+				/** @author yildiz
+				 *  bunu logladigimda gordum ki stack en son 0 oluyor, yani algoritma'yi bitirebilirsin gibi
+				 */
+				console.log(stack.length);
+				if (stack.length === 0 && visited.flat().filter(v => !v).length > 0) {
+					for (let i = rows - 1; i > 0; i -= 2) {
+						for (let j = cols - 1; j > 0; j -= 2) {
+							if (!visited[i][j]) {
+								visited[i][j] = true;
+								mazeContainer.children[i * cols + j].classList.remove('obstacle');
+							}
+						}
+					}
+				}
 
-        // Oyunu sıfırlama fonksiyonu
-        function resetGame() {
-            // Labirenti ve mesajı sıfırla
-            for (let row = 0; row < rows; row++) {
-                for (let col = 0; col < cols; col++) {
-                    maze[row][col].classList.remove('player');
-                }
-            }
-            playerPosition = [...startCell];
-            playerCell = maze[playerPosition[0]][playerPosition[1]];
-            playerCell.classList.add('player');
-            messageElement.textContent = '';
+				await sleep(10);
+			}
 
-            // Modalı kapat
-            const resetModal = document.getElementById('resetModal');
-            resetModal.style.display = 'none';
-        }
-    </script>
+			console.log("done");
+			/** @author yildiz
+			 *  eger kod buraya gelirse input event handler'larini burada ekleyip oyun baslamadan hareket etme problemini cozerdin
+			 */
+		}
+		generateMaze();
+
+		// Reset işlemi onaylandığında
+		const confirmResetButton = document.getElementById('confirmReset');
+		confirmResetButton.addEventListener('click', () => {
+			resetGame();
+		});
+
+		// Reset işlemi iptal edildiğinde
+		const cancelResetButton = document.getElementById('cancelReset');
+		cancelResetButton.addEventListener('click', () => {
+			const resetModal = document.getElementById('resetModal');
+			resetModal.style.display = 'none';
+		});
+
+		// Oyunu sıfırlama fonksiyonu
+		function resetGame() {
+			// Labirenti ve mesajı sıfırla
+			for (let row = 0; row < rows; row++) {
+				for (let col = 0; col < cols; col++) {
+					maze[row][col].classList.remove('player');
+				}
+			}
+			playerPosition = [...startCell];
+			playerCell = maze[playerPosition[0]][playerPosition[1]];
+			playerCell.classList.add('player');
+			messageElement.textContent = '';
+
+			// Modalı kapat
+			const resetModal = document.getElementById('resetModal');
+			resetModal.style.display = 'none';
+		}
+	</script>
 </body>
 </html>
